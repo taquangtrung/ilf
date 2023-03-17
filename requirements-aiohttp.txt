@@ -1,0 +1,10 @@
+idna_ssl
+async_timeout
+attr
+attrs
+aiosignal
+cytoolz
+charset_normalizer
+yarl
+multidict==5.2.0
+typing_extensions==4.1.1
