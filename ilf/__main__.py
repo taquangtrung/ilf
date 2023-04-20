@@ -21,6 +21,7 @@ def get_args():
     parser.add_argument('--proj', dest='proj', type=str, default=None)
     parser.add_argument('--contract', dest='contract', type=str, default=None)
     parser.add_argument('--limit', dest='limit', type=int, default=100)
+    parser.add_argument('--timeout', dest='timeout', type=int, default=10) # Timeout in seconds per contract
     parser.add_argument('--fuzzer', dest='fuzzer', choices=['random', 'imitation', 'symbolic', 'sym_plus', 'mix'], default='random')
 
     parser.add_argument('--model', dest='model', type=str, default=None)
@@ -84,7 +85,7 @@ def main():
         policy = PolicyMix(execution, contract_manager, account_manager, args)
         obs = ObsMix(contract_manager, account_manager, args.dataset_dump_path, backend_loggers)
 
-    environment = Environment(args.limit, args.seed)
+    environment = Environment(args.limit, args.timeout, args.seed)
     environment.fuzz_loop(policy, obs)
 
 
