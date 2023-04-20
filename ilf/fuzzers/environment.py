@@ -2,6 +2,7 @@ import random
 import numpy
 import torch
 import logging
+import time
 
 from ..execution import Execution, Tx
 from ..ethereum import Method
@@ -17,8 +18,9 @@ LOG = logging.getLogger(__name__)
 
 class Environment:
 
-    def __init__(self, limit, seed):
+    def __init__(self, limit, timeout, seed):
         self.limit = limit
+        self.timeout = timeout # Timeout in seconds
         self.seed = seed
 
 
@@ -34,8 +36,17 @@ class Environment:
         torch.manual_seed(self.seed)
         numpy.random.seed(self.seed)
 
-        for i in range(1, self.limit+1):
-            if policy.__class__ in (PolicyRandom, PolicyImitation) and i > self.limit // 2:
+        # for i in range(1, self.limit+1):
+
+        # NOTE: change the old code `for` loop to `while` loop to support timeout
+        start_time = time.time()
+        i = 1
+        curr_time = time.time()
+        while (i <= self.limit or (curr_time - start_time < self.timeout)):
+            curr_time = time.time()
+            if (policy.__class__ in (PolicyRandom, PolicyImitation)
+                and ((i > self.limit // 2)
+                     or (curr_time - start_time > self.timeout / 2))):
                 for contract_name in policy.contract_manager.fuzz_contract_names:
                     contract = policy.contract_manager[contract_name]
                     policy.execution.set_balance(contract.addresses[0], 10 ** 29)
