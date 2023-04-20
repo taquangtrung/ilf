@@ -36,17 +36,24 @@ class Environment:
         torch.manual_seed(self.seed)
         numpy.random.seed(self.seed)
 
-        # for i in range(1, self.limit+1):
-
-        # NOTE: change the old code `for` loop to `while` loop to support timeout
-        start_time = time.time()
+        # NOTE: new fuzzing loop to support both timeout and transaction limits
         i = 1
-        curr_time = time.time()
-        while (i <= self.limit or (curr_time - start_time < self.timeout)):
-            curr_time = time.time()
+        start_time = curr_time = None
+        if self.timeout > 0:
+            start_time = curr_time = time.time()
+        while (True):
+            i += 1
+            if self.timeout > 0:
+                curr_time = time.time()
+                if (curr_time - start_time > self.timeout):
+                    break
+            else:
+                if i > self.limit:
+                    break
+
             if (policy.__class__ in (PolicyRandom, PolicyImitation)
-                and ((i > self.limit // 2)
-                     or (curr_time - start_time > self.timeout / 2))):
+                and ((curr_time is not None and curr_time - start_time > self.timeout / 2)
+                     or (curr_time is None and i > self.limit // 2))):
                 for contract_name in policy.contract_manager.fuzz_contract_names:
                     contract = policy.contract_manager[contract_name]
                     policy.execution.set_balance(contract.addresses[0], 10 ** 29)
